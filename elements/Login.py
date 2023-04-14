@@ -4,12 +4,11 @@ from tkinter import *
 from Colors import Colors
 import pyperclip
 from utils.Connection import *
-from main import *
 
 
 class Login:
     def __init__(self):
-        self.port = random.randint(100, 99999)
+        self.port = random.randint(100, 9999)
         self.communication = Connection(self.port)
         self.ip = self.communication.my_IP
         self.status_label = None

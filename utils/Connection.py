@@ -1,8 +1,7 @@
 import pickle
 import socket
-import threading
 from threading import *
-import main
+from windows.ChatPage import main
 
 BUFFER_SIZE = 8192
 
@@ -33,9 +32,9 @@ class Connection:
         print("Started listening")
         while not self.found_partner:
             try:
-                conn, addr = self.socket.accept()
-                Thread(target=self.connection_recieve, args=(conn, addr,)).start()
-            except ConnectionError as error:
+                connection, ip = self.socket.accept()
+                Thread(target=self.connection_recieve, args=(connection, ip,)).start()
+            except OSError:
                 pass
 
     def _connect(self, ip, port, login_window) -> None:
