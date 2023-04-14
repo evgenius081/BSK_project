@@ -8,7 +8,7 @@ from datetime import *
 from Colors import Colors
 
 
-def chat(window, paperclip, dots, paper_plane):
+def chat(window, paperclip, dots, paper_plane) -> tkinter.Frame:
 
     main = tkinter.Frame(window, bg=Colors.BUTTON_BG.value)
 

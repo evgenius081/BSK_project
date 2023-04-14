@@ -1,3 +1,4 @@
+import tkinter
 from tkinter import *
 from enum import Enum
 from Colors import Colors
@@ -11,41 +12,39 @@ class CipherMethods(Enum):
 cipher = CipherMethods.CBC
 
 
-def send_message(txt):
+def send_message(txt) -> None:
     message_txt = txt.get('1.0', "end-1c")
     if message_txt[-2:] == '\n':
         message_txt = message_txt[:-2]
     txt.delete('1.0', "end-1c")
-    print(message_txt)
-    print("'" + txt.get('1.0', "end-1c") + "'")
 
 
-def enter_handler(event):
+def enter_handler(event) -> None:
     send_message(event.widget)
 
 
-def focus_in(event):
+def focus_in(event) -> None:
     event.widget.configure(font=("Verdana", 12), width=72, foreground="#ffffff")
     if event.widget.get("1.0", "end-1c") == "Write a message...":
         event.widget.delete("1.0", "end-1c")
 
 
-def focus_out(event):
+def focus_out(event) -> None:
     if event.widget.compare("end-1c", "==", "1.0"):
         event.widget.configure(font=("Verdana", 10), width=90, foreground="#eeeeee")
         event.widget.insert("1.0", "Write a message...")
 
 
-def handle_setting(method):
+def handle_setting(method) -> None:
     global cipher
     cipher = CipherMethods[method]
 
 
-def handle_a(default_value):
+def handle_a(default_value) -> None:
     pass
 
 
-def change_format(bt, settings):
+def change_format(bt, settings) -> None:
     try:         
         bt.configure(state="disabled")
         x = bt.winfo_rootx()-58
@@ -57,7 +56,7 @@ def change_format(bt, settings):
         bt.configure(bg=Colors.BUTTON_BG.value)
 
 
-def controls(main, dots, paperclip, paper_plane):
+def controls(main, dots, paperclip, paper_plane) -> None:
     text = Text(main, width=90, height=1, font=("Verdana", 10), wrap=WORD, padx=10, pady=6, bd=0,
                 bg=Colors.BUTTON_BG.value, insertbackground="white", foreground="#eeeeee")
     text.grid(row=1, column=2,  rowspan=1)

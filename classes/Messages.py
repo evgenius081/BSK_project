@@ -4,7 +4,7 @@ from Colors import Colors
 MAX_MESSAGE_WIDTH = 42
 
 
-def messages(parent, message, message_id):
+def messages(parent, message, message_id) -> None:
     frame = Frame(parent, width=210, height=30)
     frame.grid_columnconfigure(0, weight=1)
     frame.grid_rowconfigure(0, weight=1)
