@@ -33,6 +33,7 @@ class Connection:
         while not self.found_partner:
             try:
                 connection, ip = self.socket.accept()
+                print("found smth")
                 Thread(target=self.connection_recieve, args=(connection, ip,)).start()
             except OSError:
                 pass
@@ -40,7 +41,7 @@ class Connection:
     def _connect(self, ip, port, login_window) -> None:
         print(f"connecting to: {ip}:{port}")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((ip, port))
+        sock.connect((ip, int(port)))
         greetings = {"type": "greetings", "port": self.my_port}
         sock.sendall(pickle.dumps(greetings))
         result = sock.recv(BUFFER_SIZE).decode("utf-8")
