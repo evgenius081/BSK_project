@@ -1,5 +1,5 @@
-from windows.LoginPage import login
+from windows.LoginPage import login_page
 
 if __name__ == "__main__":
-    login()
+    login_page()
 

@@ -16,7 +16,7 @@ class Connection:
         self.IP = None
         self.port = None
 
-        Thread(target=self._listen()).start()
+        Thread(target=self._listen).start()
 
     def connection_recieve(self, connection, ip):
         data = connection.recv(BUFFER_SIZE)
