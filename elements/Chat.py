@@ -1,20 +1,20 @@
-from tkinter import *
 import tkinter
 from tkinter import ttk
 from tkinter.ttk import *
-from Messages import *
-from DecryptedMessage import *
-from Controls import Controls
+from classes.Messages import *
+from classes.DecryptedMessage import *
+from elements.Controls import controls
 from datetime import *
 from Colors import Colors
 
-def Chat(Window, paperclip, dots, paperPlane):
 
-    Main = tkinter.Frame(Window, bg=Colors.BUTTON_BG.value)
+def chat(window, paperclip, dots, paper_plane):
 
-    messages = [DecryptedTextMessage("a", "lorem ipsum", datetime.now(), Status.Read), DecryptedTextMessage("b", "lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet", datetime.now(), Status.Sent)]
+    main = tkinter.Frame(window, bg=Colors.BUTTON_BG.value)
 
-    fr = tkinter.Frame(Main, width=850, height=468, bd=0, bg=Colors.MAIN_BG.value)
+    messages_list = [DecryptedTextMessage("a", "lorem ipsum", datetime.now(), Status.Read), DecryptedTextMessage("b", "lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet", datetime.now(), Status.Sent)]
+
+    fr = tkinter.Frame(main, width=850, height=468, bd=0, bg=Colors.MAIN_BG.value)
     fr.grid(row=0, column=0, columnspan=4)
 
     canvas = tkinter.Canvas(fr, width=850, height=448, bg=Colors.MAIN_BG.value, bd=0, highlightthickness=0)
@@ -24,8 +24,10 @@ def Chat(Window, paperclip, dots, paperPlane):
     style.theme_use('clam')
     
     style.configure("Vertical.TScrollbar", gripcount=0,
-                background=Colors.SCROLLBAR_HANDLE.value, darkcolor=Colors.MAIN_BG.value, lightcolor=Colors.MAIN_BG.value,
-                troughcolor=Colors.MAIN_BG.value, bordercolor=Colors.MAIN_BG.value, arrowcolor=Colors.SCROLLBAR_HANDLE.value)
+                    background=Colors.SCROLLBAR_HANDLE.value, darkcolor=Colors.MAIN_BG.value,
+                    lightcolor=Colors.MAIN_BG.value,
+                    troughcolor=Colors.MAIN_BG.value, bordercolor=Colors.MAIN_BG.value,
+                    arrowcolor=Colors.SCROLLBAR_HANDLE.value)
 
     scrollbar = ttk.Scrollbar(fr, orient=tkinter.VERTICAL, command=canvas.yview, style="Vertical.TScrollbar")
     scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
@@ -42,13 +44,14 @@ def Chat(Window, paperclip, dots, paperPlane):
 
     canvas.bind_all("<MouseWheel>", on_mousewheel)
 
-    Controls(Main, dots, paperclip, paperPlane)
+    controls(main, dots, paperclip, paper_plane)
 
     for i in range(0, 60, 3):
-        for message in messages:
-            Messages(frame, message, i+messages.index(message))
+        for message in messages_list:
+            messages(frame, message, i+messages_list.index(message))
 
     frame.update_idletasks()
     canvas.config(scrollregion=canvas.bbox("all"))
 
-    return Main
+    return main
+
