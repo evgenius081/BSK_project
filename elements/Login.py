@@ -7,10 +7,10 @@ from utils.Connection import *
 
 
 class Login:
-    def __init__(self):
-        self.port = random.randint(100, 9999)
-        self.communication = Connection(self.port)
-        self.ip = self.communication.my_IP
+    def __init__(self, connection):
+        self.connection = connection
+        self.port = connection.my_port
+        self.ip = self.connection.my_IP
         self.status_label = None
         self.connect_button = None
 
@@ -23,7 +23,7 @@ class Login:
         ip = connection_string.split(":")[0]
         port = connection_string.split(":")[1]
         self.connect_button.configure(text="Connecting...")
-        self.communication.connect(ip, port, window)
+        self.connection.connect(ip, port)
 
     def render_login(self, window) -> tkinter.Frame:
         main = Frame(window, bg=Colors.MAIN_BG.value)

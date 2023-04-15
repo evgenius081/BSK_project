@@ -1,22 +1,24 @@
 import pickle
 import socket
 from threading import *
-from windows.ChatPage import main
+from windows.ChatPage import main_page
 
 BUFFER_SIZE = 8192
 
 
 class Connection:
     def __init__(self, port):
-        self.my_IP = socket.gethostbyname(socket.gethostname())
+        self.my_IP = "127.0.0.1" #socket.gethostbyname(socket.gethostname())
         self.my_port = port
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.my_IP, self.my_port))
         self.found_partner = False
         self.IP = None
         self.port = None
-
-        Thread(target=self._listen).start()
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.my_IP, self.my_port))
+        self.socket.listen(1)
+        self.listen_thread = Thread(target=self._listen).start()
+        self.login_window = None
+        self.images = None
 
     def connection_recieve(self, connection, ip):
         data = connection.recv(BUFFER_SIZE)
@@ -25,8 +27,9 @@ class Connection:
         if info["type"] == "greetings":
             self.IP = ip
             self.port = int(info["port"])
-            connection.sendall("greetings")
+            connection.sendall(bytes("greetings", "utf-8"))
             self.found_partner = True
+            main_page(self.login_window, self.images)
 
     def _listen(self):
         print("Started listening")
@@ -38,7 +41,7 @@ class Connection:
             except OSError:
                 pass
 
-    def _connect(self, ip, port, login_window) -> None:
+    def _connect(self, ip, port) -> None:
         print(f"connecting to: {ip}:{port}")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((ip, int(port)))
@@ -48,9 +51,9 @@ class Connection:
 
         print(result)
         sock.close()
-        login_window.destroy()
-        main.main()
+        self.found_partner = True
+        main_page(self.login_window, self.images)
 
-    def connect(self, ip, port, login_window) -> None:
-        Thread(target=self._connect, args=(ip, port, login_window,)).start()
+    def connect(self, ip, port) -> None:
+        Thread(target=self._connect, args=(ip, port,)).start()
 

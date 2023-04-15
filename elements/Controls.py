@@ -56,7 +56,7 @@ def change_format(bt, settings) -> None:
         bt.configure(bg=Colors.BUTTON_BG.value)
 
 
-def controls(main, dots, paperclip, paper_plane) -> None:
+def controls(main, images) -> None:
     text = Text(main, width=90, height=1, font=("Verdana", 10), wrap=WORD, padx=10, pady=6, bd=0,
                 bg=Colors.BUTTON_BG.value, insertbackground="white", foreground="#eeeeee")
     text.grid(row=1, column=2,  rowspan=1)
@@ -72,6 +72,8 @@ def controls(main, dots, paperclip, paper_plane) -> None:
     for option in [i.value for i in list(CipherMethods)]:
         settings.add_radiobutton(label=option, font=("Verdana", "12"), command=lambda: handle_setting(option),
                                  variable=default_value, value=option)
+
+    [dots, paperclip, paper_plane] = images
 
     more_button = Button(main, image=dots, height=32, width=35, compound="bottom", font=("Arial Bold", 16),
                          bg=Colors.BUTTON_BG.value, fg="white", justify="left", disabledforeground="white",

@@ -8,11 +8,9 @@ from datetime import *
 from Colors import Colors
 
 
-def chat(window, paperclip, dots, paper_plane) -> tkinter.Frame:
+def chat(window, images) -> tkinter.Frame:
 
     main = tkinter.Frame(window, bg=Colors.BUTTON_BG.value)
-
-    messages_list = [DecryptedTextMessage("a", "lorem ipsum", datetime.now(), Status.Read), DecryptedTextMessage("b", "lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet", datetime.now(), Status.Sent)]
 
     fr = tkinter.Frame(main, width=850, height=468, bd=0, bg=Colors.MAIN_BG.value)
     fr.grid(row=0, column=0, columnspan=4)
@@ -44,11 +42,15 @@ def chat(window, paperclip, dots, paper_plane) -> tkinter.Frame:
 
     canvas.bind_all("<MouseWheel>", on_mousewheel)
 
-    controls(main, dots, paperclip, paper_plane)
+    controls(main, images)
 
-    for i in range(0, 60, 3):
-        for message in messages_list:
-            messages(frame, message, i+messages_list.index(message))
+    # messages_list = [DecryptedTextMessage("a", "lorem ipsum", datetime.now(), Status.Read), DecryptedTextMessage("b",
+    #                                                                                                             "lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet",
+    #                                                                                                             datetime.now(),
+    #                                                                                                             Status.Sent)]
+    # for i in range(0, 60, 3):
+    #     for message in messages_list:
+    #         messages(frame, message, i+messages_list.index(message))
 
     frame.update_idletasks()
     canvas.config(scrollregion=canvas.bbox("all"))
