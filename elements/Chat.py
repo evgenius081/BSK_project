@@ -19,7 +19,7 @@ def focus_out(event) -> None:
         event.widget.insert("1.0", "Write a message...")
 
 
-def handle_a() -> None:
+def handle_a(default_value) -> None:
     pass
 
 
@@ -103,10 +103,10 @@ class Chat:
 
         def on_mousewheel(event):
             self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
         self.canvas.bind_all("<MouseWheel>", on_mousewheel)
 
         self.controls(main, images)
+
         self.message_frame.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
@@ -124,7 +124,7 @@ class Chat:
 
         default_value = StringVar(value=self.cipher.value)
         settings = Menu(main, font=("Verdana", 12), tearoff=0, background="white", activebackground=Colors.MAIN_BG.value,
-                        foreground="#000000", postcommand=lambda: handle_a(), borderwidth=0, bd=0,
+                        foreground="#000000", postcommand=lambda: handle_a(default_value), borderwidth=0, bd=0,
                         cursor="hand2")
         for option in [i.value for i in list(CipherMethods)]:
             settings.add_radiobutton(label=option, font=("Verdana", "12"), command=lambda: self.handle_setting(option),
