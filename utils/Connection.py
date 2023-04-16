@@ -71,7 +71,10 @@ class Connection:
             # send public key
             greetings = {"type": "greetings", "port": self.my_port, "public_key": self.encryption.public_key.exportKey()}
             sock.sendall(pickle.dumps(greetings))
-            result = sock.recv(BUFFER_SIZE).decode("utf-8")
+            result = sock.recv(BUFFER_SIZE)
+            message = pickle.loads(result)
+            self.encryption.session_key = self.encryption.decrypt_key(self.encryption.private_key,
+                                                                      message["session_key"])
 
         print(result)
         self.IP = ip
