@@ -10,6 +10,7 @@ from classes.CipherModes import *
 
 BLOCK_SIZE = 16
 
+
 class Encryption:
     def __init__(self):
         self.public_key = None
@@ -21,9 +22,9 @@ class Encryption:
         self.create_private_key()
         self.create_public_key()
 
-    def create_private_key(self):
+    def create_private_key(self) -> None:
         num = random.randint(1, 300)
-        self.key_file = f"privateKey_{num}.pem";
+        self.key_file = f"privateKey_{num}.pem"
 
         if not os.path.exists(self.key_dir):
             os.makedirs(self.key_dir)
@@ -39,11 +40,11 @@ class Encryption:
                 self.private_key =RSA.importKey(file.read())
                 file.close()
 
-    def create_public_key(self):
+    def create_public_key(self) -> bytes:
         self.public_key = self.private_key.publickey()
         return self.public_key
 
-    def generate_session_key(self):
+    def generate_session_key(self) -> bytes:
         self.session_key = get_random_bytes(BLOCK_SIZE)
         return self.session_key
 
@@ -60,7 +61,7 @@ class Encryption:
             cipher = AES.new(key, mode, iv)
             return base64.b64encode(iv + cipher.encrypt(raw))
 
-    def decrypt_mode(self, enc: bytes, mode=AES.MODE_ECB):
+    def decrypt_mode(self, enc, mode=AES.MODE_ECB) -> bytes:
         key = self.session_key
         enc = base64.b64decode(enc + b'=' * (-len(enc) % 4))
 
@@ -71,10 +72,11 @@ class Encryption:
             cipher = AES.new(key, mode, enc[:BLOCK_SIZE])
             return unpad(cipher.decrypt(enc[BLOCK_SIZE:]), BLOCK_SIZE)
 
-    def encrypt_key(self, public_key, data):
+    def encrypt_key(self, public_key, data) -> bytes:
         cipher = PKCS1_OAEP.new(public_key)
         return cipher.encrypt(data)
 
-    def decrypt_key(self, private_key, data):
+    def decrypt_key(self, private_key, data) -> bytes:
         decryptor = PKCS1_OAEP.new(private_key)
         return decryptor.decrypt(data)
+

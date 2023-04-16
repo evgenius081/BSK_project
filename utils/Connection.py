@@ -48,7 +48,6 @@ class Connection:
             # add cypher of session key by public key
         elif message["type"] == "text":
             text = self.decrypt_data(message["data"], message["mode"])
-            print(text)
             message["data"] = text
             self.chat.add_message(message, "partner")
 
@@ -73,7 +72,6 @@ class Connection:
             self.encryption.session_key = self.encryption.decrypt_key(self.encryption.private_key,
                                                                       message["session_key"])
 
-        print(result)
         self.IP = ip
         self.port = int(port)
         self.found_partner = True
@@ -83,19 +81,19 @@ class Connection:
     def connect(self, ip, port) -> None:
         Thread(target=self._connect, args=(ip, port,)).start()
 
-    def decrypt_data(self, data, mode):
+    def decrypt_data(self, data, mode) -> bytes:
         if mode == CipherMethods.ECB:
             return self.encryption.decrypt_mode(data)
         elif mode == CipherMethods.CBC:
             return self.encryption.decrypt_mode(data, AES.MODE_CBC)
 
-    def encrypt_data(self, data, mode):
+    def encrypt_data(self, data, mode) -> bytes:
         if mode == CipherMethods.ECB:
             return self.encryption.encrypt_mode(data)
         elif mode == CipherMethods.CBC:
             return self.encryption.encrypt_mode(data, AES.MODE_CBC)
 
-    def send_message(self, text, mode):
+    def send_message(self, text, mode) -> None:
         # add mode
         enc = self.encrypt_data(text, mode)
         message = {"type": "text", "data": enc, "mode": mode}

@@ -36,7 +36,7 @@ def change_format(bt, settings) -> None:
 
 
 class Chat:
-    def __init__(self, connection):
+    def __init__(self, connection) -> None:
         self.connection = connection
         self.cipher = CipherMethods.CBC
         self.messages = []
@@ -44,7 +44,7 @@ class Chat:
         self.message_frame = None
         self.canvas = None
 
-    def send_message(self, txt) -> None:
+    def send_message(self, txt):
         message_txt = txt.get('1.0', END).strip()
         txt.delete('1.0', END)
         if len(message_txt) > 0:
@@ -103,7 +103,7 @@ class Chat:
         self.message_frame.grid_columnconfigure(1, weight=1)
         self.canvas.create_window((0, 5), window=self.message_frame, anchor='nw', width=850)
 
-        def on_mousewheel(event):
+        def on_mousewheel(event) -> None:
             self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         self.canvas.bind_all("<MouseWheel>", on_mousewheel)
 
