@@ -24,6 +24,10 @@ class Encryption:
     def create_private_key(self):
         num = random.randint(1, 300)
         self.key_file = f"privateKey_{num}.pem";
+
+        if not os.path.exists(self.key_dir):
+            os.makedirs(self.key_dir)
+
         path = os.path.join(self.key_dir, self.key_file)
         if not os.path.exists(path):
             self.private_key = RSA.generate(self.size_key)
