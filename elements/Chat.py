@@ -47,7 +47,8 @@ class Chat:
     def send_message(self, txt) -> None:
         message_txt = txt.get('1.0', END).strip()
         txt.delete('1.0', END)
-        self.connection.send_message(message_txt)
+        # add mode
+        self.connection.send_message(message_txt, self.cipher)
         self.canvas.yview_moveto(1)
 
     def enter_handler(self, event) -> None:
