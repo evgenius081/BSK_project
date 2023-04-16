@@ -10,7 +10,6 @@ class Connection:
     def __init__(self, port):
         self.my_IP = "127.0.0.1" #socket.gethostbyname(socket.gethostname())
         self.my_port = port
-        self.found_partner = False
         self.IP = None
         self.port = None
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -22,43 +21,51 @@ class Connection:
         self.images = None
         self.chat = None
 
-    def connection_recieve(self, connection, ip):
+    def receive(self, connection) -> None:
         data = connection.recv(BUFFER_SIZE)
-        info = pickle.loads(data)
-        print(info)
-        if info["type"] == "greetings":
-            self.IP = ip
-            self.port = int(info["port"])
+        message = pickle.loads(data)
+        print(message)
+        if message["type"] == "greetings":
             connection.sendall(bytes("greetings", "utf-8"))
-            self.found_partner = True
+            self.port = int(message["port"])
             self.chat = Chat(self.login.connection)
             self.chat.render_chat(self.login_window, self.images)
+        elif message["type"] == "text":
+            print(message["data"])
+            self.chat.add_message(message, "partner")
 
-    def _listen(self):
-        print("Started listening")
-        while not self.found_partner:
+    def _listen(self) -> None:
+        while True:
             try:
-                connection, ip = self.socket.accept()
-                Thread(target=self.connection_recieve, args=(connection, ip[0],)).start()
+                connection, address = self.socket.accept()
+                self.IP = address[0]
+                Thread(target=self.receive, args=(connection,)).start()
             except OSError:
                 pass
 
     def _connect(self, ip, port) -> None:
         print(f"connecting to: {ip}:{port}")
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((ip, int(port)))
-        greetings = {"type": "greetings", "port": self.my_port}
-        sock.sendall(pickle.dumps(greetings))
-        result = sock.recv(BUFFER_SIZE).decode("utf-8")
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((ip, int(port)))
+            greetings = {"type": "greetings", "port": self.my_port}
+            sock.sendall(pickle.dumps(greetings))
+            result = sock.recv(BUFFER_SIZE).decode("utf-8")
 
         print(result)
-        sock.close()
         self.IP = ip
-        self.port = port
+        self.port = int(port)
         self.found_partner = True
         self.chat = Chat(self.login.connection)
         self.chat.render_chat(self.login_window, self.images)
 
     def connect(self, ip, port) -> None:
         Thread(target=self._connect, args=(ip, port,)).start()
+
+    def send_message(self, text):
+        message = {"type": "text", "data": text}
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            print((self.IP, self.port))
+            sock.connect((self.IP, self.port))
+            sock.sendall(pickle.dumps(message))
+        self.chat.add_message(message, "me")
 
