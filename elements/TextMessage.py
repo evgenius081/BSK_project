@@ -4,7 +4,7 @@ from Colors import Colors
 MAX_MESSAGE_WIDTH = 42
 
 
-def messages(parent, message, message_id) -> None:
+def text_message(parent, message, message_id) -> None:
     frame = Frame(parent, width=210, height=30)
     frame.grid_columnconfigure(0, weight=1)
     frame.grid_rowconfigure(0, weight=1)
@@ -13,13 +13,13 @@ def messages(parent, message, message_id) -> None:
     text.insert(INSERT, message.text)
     time = Label(frame, text=message.datetime.strftime("%H:%M"), font=("Verdana", 7),
                  foreground=Colors.MESSAGES_TIME_FOREGROUND.value)
-    if message.author_id == "a":
+    if message.author_id == "me":
         frame.config(bg=Colors.MY_MESSAGE_BG.value)
         frame.grid(row=message_id, column=1, sticky="ne", padx=6, pady=3)
         text.config(background=Colors.MY_MESSAGE_BG.value, foreground=Colors.MY_MESSAGES_TEXT_FOREGROUND.value, padx=6)
         time.config(bg=Colors.MY_MESSAGE_BG.value)
         time.grid(row=1, column=0, padx=6, sticky="nw")
-    else:
+    elif message.author_id == "partner":
         frame.config(bg=Colors.MESSAGE_BG.value)
         frame.grid(row=message_id, column=0, sticky="nw", padx=6, pady=3)
         text.config(background=Colors.MESSAGE_BG.value, foreground=Colors.MESSAGES_TEXT_FOREGROUND.value)
