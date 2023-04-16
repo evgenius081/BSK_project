@@ -61,7 +61,7 @@ class Chat:
     def add_message(self, message, author) -> None:
         with self.lock:
             self.messages.append(message)
-            text_message(self.message_frame, DecryptedTextMessage(author, message["data"], datetime.now()),
+            text_message(self.message_frame, DecryptedTextMessage(author, message["data"], datetime.now(), message["mode"]),
                          len(self.messages)-1)
             self.message_frame.update_idletasks()
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
