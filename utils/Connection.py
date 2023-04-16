@@ -34,25 +34,22 @@ class Connection:
         print(message)
         key = None
 
-        if message["public_key"] != None:
+        if "public_key" in message:
             self.encryption.generate_session_key()
             another_user_key = RSA.import_key(message["public_key"])
             key = self.encryption.encrypt_key(another_user_key, self.encryption.session_key)
 
         if message["type"] == "greetings":
             key_change = {"type": "key", "session_key": key}
-            connection.sendall(bytes("greetings", "utf-8"))
-
             self.port = int(message["port"])
             self.chat = Chat(self.login.connection)
             self.chat.render_chat(self.login_window, self.images)
             connection.sendall(pickle.dumps(key_change))
             # add cypher of session key by public key
-        elif message["type"] == "key":
-            self.encryption.session_key = self.encryption.decrypt_key(self.encryption.private_key, message["session_key"])
         elif message["type"] == "text":
             text = self.decrypt_data(message["data"], message["mode"])
             print(text)
+            message["data"] = text
             self.chat.add_message(message, "partner")
 
     def _listen(self) -> None:
@@ -100,11 +97,12 @@ class Connection:
 
     def send_message(self, text, mode):
         # add mode
-        text = self.encrypt_data(text, mode)
-        message = {"type": "text", "data": text, "mode": mode}
+        enc = self.encrypt_data(text, mode)
+        message = {"type": "text", "data": enc, "mode": mode}
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             print((self.IP, self.port))
             sock.connect((self.IP, self.port))
             sock.sendall(pickle.dumps(message))
+        message["data"] = text
         self.chat.add_message(message, "me")
 
