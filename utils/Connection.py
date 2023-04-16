@@ -1,7 +1,7 @@
 import pickle
 import socket
 from threading import *
-from windows.ChatPage import main_page
+from elements.Chat import *
 
 BUFFER_SIZE = 8192
 
@@ -18,7 +18,9 @@ class Connection:
         self.socket.listen(1)
         self.listen_thread = Thread(target=self._listen).start()
         self.login_window = None
+        self.login = None
         self.images = None
+        self.chat = None
 
     def connection_recieve(self, connection, ip):
         data = connection.recv(BUFFER_SIZE)
@@ -29,15 +31,15 @@ class Connection:
             self.port = int(info["port"])
             connection.sendall(bytes("greetings", "utf-8"))
             self.found_partner = True
-            main_page(self.login_window, self.images)
+            self.chat = Chat(self.login.connection)
+            self.chat.render_chat(self.login_window, self.images)
 
     def _listen(self):
         print("Started listening")
         while not self.found_partner:
             try:
                 connection, ip = self.socket.accept()
-                print("found smth")
-                Thread(target=self.connection_recieve, args=(connection, ip,)).start()
+                Thread(target=self.connection_recieve, args=(connection, ip[0],)).start()
             except OSError:
                 pass
 
@@ -51,8 +53,11 @@ class Connection:
 
         print(result)
         sock.close()
+        self.IP = ip
+        self.port = port
         self.found_partner = True
-        main_page(self.login_window, self.images)
+        self.chat = Chat(self.login.connection)
+        self.chat.render_chat(self.login_window, self.images)
 
     def connect(self, ip, port) -> None:
         Thread(target=self._connect, args=(ip, port,)).start()
