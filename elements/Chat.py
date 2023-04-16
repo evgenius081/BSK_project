@@ -43,6 +43,7 @@ class Chat:
         self.lock = threading.Lock()
         self.message_frame = None
         self.canvas = None
+        self.default_value = None
 
     def send_message(self, txt):
         message_txt = txt.get('1.0', END).strip()
@@ -57,6 +58,7 @@ class Chat:
 
     def handle_setting(self, method) -> None:
         self.cipher = CipherMethods[method]
+        self.default_value.set(method)
 
     def add_message(self, message, author) -> None:
         with self.lock:
@@ -124,13 +126,14 @@ class Chat:
         text.bind("<FocusOut>", focus_out)
         text.bind("<Return>", self.enter_handler)
 
-        default_value = StringVar(value=self.cipher.value)
+        self.default_value = StringVar(value="CBC")
         settings = Menu(main, font=("Verdana", 12), tearoff=0, background="white", activebackground=Colors.MAIN_BG.value,
-                        foreground="#000000", postcommand=lambda: handle_a(default_value), borderwidth=0, bd=0,
+                        foreground="#000000", postcommand=lambda: handle_a(self.default_value), borderwidth=0, bd=0,
                         cursor="hand2")
-        for option in [i.value for i in list(CipherMethods)]:
-            settings.add_radiobutton(label=option, font=("Verdana", "12"), command=lambda: self.handle_setting(option),
-                                     variable=default_value, value=option)
+        settings.add_radiobutton(label="CBC", font=("Verdana", "12"), command=lambda: self.handle_setting("CBC"),
+                                 variable=self.default_value, value="CBC")
+        settings.add_radiobutton(label="ECB", font=("Verdana", "12"), command=lambda: self.handle_setting("ECB"),
+                                 variable=self.default_value, value="ECB")
 
         [dots, paperclip, paper_plane] = images
 
