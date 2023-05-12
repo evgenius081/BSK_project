@@ -1,5 +1,6 @@
 import pickle
 import socket
+import time
 from threading import *
 
 from Crypto.Cipher import AES
@@ -49,7 +50,7 @@ class Connection:
         elif message["type"] == "text":
             text = self.decrypt_data(message["data"], message["mode"])
             message["data"] = text
-            self.chat.add_message(message, "partner")
+            self.chat.add_text_message(message, "partner")
 
     def _listen(self) -> None:
         while True:
@@ -102,5 +103,7 @@ class Connection:
             sock.connect((self.IP, self.port))
             sock.sendall(pickle.dumps(message))
         message["data"] = text
-        self.chat.add_message(message, "me")
+        self.chat.add_text_message(message, "me")
+        self.chat.add_file_message({"type": "file", "filename": "paperclip-white-min.png", "mode": mode}, "me", self.images)
+        self.chat.add_file_message({"type": "file", "filename": "paperclip-white-min.png", "mode": mode}, "partner", self.images)
 

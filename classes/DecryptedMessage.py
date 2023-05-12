@@ -12,8 +12,7 @@ class DecryptedTextMessage(DecryptedMessage):
 
 
 class DecryptedFileMessage(DecryptedMessage):
-    def __init__(self, author_id, file, filename, datetime, cipher_mode):
+    def __init__(self, author_id, filename, datetime, cipher_mode):
         super().__init__(author_id, datetime, cipher_mode)
-        self.file = file
         self.filename = filename
 

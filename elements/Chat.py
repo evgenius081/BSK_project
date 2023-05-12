@@ -2,9 +2,11 @@ import threading
 import tkinter
 from datetime import datetime
 from tkinter import ttk
+from tkinter import filedialog
 from classes.CipherModes import *
+from elements.FileMessage import FileMessage
 from elements.TextMessage import *
-from classes.DecryptedMessage import DecryptedTextMessage
+from classes.DecryptedMessage import DecryptedTextMessage, DecryptedFileMessage
 
 
 def focus_in(event) -> None:
@@ -21,7 +23,6 @@ def focus_out(event) -> None:
 
 def handle_a(default_value) -> None:
     pass
-
 
 def change_format(bt, settings) -> None:
     try:
@@ -44,12 +45,23 @@ class Chat:
         self.message_frame = None
         self.canvas = None
         self.default_value = None
+        self.current_file = None
+        self.file_attached = False
+
+    def attach_file(self):
+        self.current_file = filedialog.askopenfilename()
+        self.text.delete("1.0", "end-1c")
+        self.text.insert("1.0", f"file: {self.current_file}")
+        self.file_attached = True
+        print(self.current_file)
 
     def send_message(self, txt):
         message_txt = txt.get('1.0', END).strip()
         txt.delete('1.0', END)
-        if len(message_txt) > 0:
-            # add mode
+        txt.insert("1.0", "Write a message...")
+        if self.file_attached:
+            pass
+        elif len(message_txt) > 0:
             self.connection.send_message(message_txt, self.cipher)
             self.canvas.yview_moveto(1)
 
@@ -60,11 +72,22 @@ class Chat:
         self.cipher = CipherMethods[method]
         self.default_value.set(method)
 
-    def add_message(self, message, author) -> None:
+    def add_text_message(self, message, author) -> None:
         with self.lock:
             self.messages.append(message)
             text_message(self.message_frame, DecryptedTextMessage(author, message["data"], datetime.now(), message["mode"]),
                          len(self.messages)-1)
+            self.message_frame.update_idletasks()
+            self.canvas.config(scrollregion=self.canvas.bbox("all"))
+            self.canvas.yview_moveto(1)
+
+    def add_file_message(self, message, author, images) -> None:
+        with self.lock:
+            self.messages.append(message)
+            file_message = FileMessage()
+            file_message.file_message(self.message_frame, DecryptedFileMessage(author, message["filename"],
+                                                                               datetime.now(), message["mode"]),
+                                      len(self.messages)-1, images),
             self.message_frame.update_idletasks()
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
             self.canvas.yview_moveto(1)
@@ -75,7 +98,7 @@ class Chat:
         window.title(f"Messenger with connected {self.connection.IP}:{self.connection.port}")
         window.geometry('863x505')
         window["bg"] = Colors.MAIN_BG.value
-        window.resizable(False, False)
+        # window.resizable(False, False)
         pav = Canvas(window, bd=0, bg=Colors.MAIN_BG.value, confine=True, height=505, width=863, highlightthickness=0)
 
         main = tkinter.Frame(window, bg=Colors.BUTTON_BG.value)
@@ -118,13 +141,13 @@ class Chat:
         pav.pack()
 
     def controls(self, main, images) -> None:
-        text = Text(main, width=90, height=1, font=("Verdana", 10), wrap=WORD, padx=10, pady=6, bd=0,
-                    bg=Colors.BUTTON_BG.value, insertbackground="white", foreground="#eeeeee")
-        text.grid(row=1, column=2, rowspan=1)
-        text.insert(INSERT, "Write a message...")
-        text.bind("<FocusIn>", focus_in)
-        text.bind("<FocusOut>", focus_out)
-        text.bind("<Return>", self.enter_handler)
+        self.text = Text(main, width=90, height=1, font=("Verdana", 10), wrap=WORD, padx=10, pady=6, bd=0,
+                         bg=Colors.BUTTON_BG.value, insertbackground="white", foreground="#eeeeee")
+        self.text.grid(row=1, column=2, rowspan=1)
+        self.text.insert(INSERT, "Write a message...")
+        self.text.bind("<FocusIn>", focus_in)
+        self.text.bind("<FocusOut>", focus_out)
+        self.text.bind("<Return>", self.enter_handler)
 
         self.default_value = StringVar(value="CBC")
         settings = Menu(main, font=("Verdana", 12), tearoff=0, background="white", activebackground=Colors.MAIN_BG.value,
@@ -135,7 +158,7 @@ class Chat:
         settings.add_radiobutton(label="ECB", font=("Verdana", "12"), command=lambda: self.handle_setting("ECB"),
                                  variable=self.default_value, value="ECB")
 
-        [dots, paperclip, paper_plane] = images
+        [dots, paperclip, paper_plane, file_black] = images
 
         more_button = Button(main, image=dots, height=32, width=35, compound="bottom", font=("Arial Bold", 16),
                              bg=Colors.BUTTON_BG.value, fg="white", justify="left", disabledforeground="white",
@@ -148,7 +171,8 @@ class Chat:
                              bg=Colors.BUTTON_BG.value, fg="white", justify="left", disabledforeground="white",
                              activebackground=Colors.BUTTON_BG.value, activeforeground="white", relief=FLAT, cursor='hand2')
 
-        send_button.config(command=lambda: self.send_message(text))
+        send_button.config(command=lambda: self.send_message(self.text))
+        attach_button.config(command=lambda: self.attach_file())
         more_button.config(command=lambda: change_format(more_button, settings=settings))
 
         more_button.grid(row=1, column=0)

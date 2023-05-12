@@ -1,6 +1,3 @@
-import random
-from tkinter import *
-from Colors import Colors
 import tkinter as tk
 import pyperclip
 from utils.Connection import *
@@ -33,13 +30,14 @@ class Login:
         window.resizable(False, False)
         window.call('wm', 'iconphoto', window._w, PhotoImage(file='img/fav.png'))
 
-        pav = Canvas(window, bd=0, bg=Colors.MAIN_BG.value, confine=True, highlightthickness=0)
+        pav = Canvas(window, bd=0, bg=Colors.MAIN_BG.value, height=330, confine=True, highlightthickness=0)
 
         self.connection.login_window = window
         paperclip = PhotoImage(file='img/paperclip-white-min.png')
         dots = PhotoImage(file='img/dots-white-min.png')
         paper_plane = PhotoImage(file='img/paper-plane-white-min.png')
-        images = [dots, paperclip, paper_plane]
+        file_black = PhotoImage(file='img/file_black_min.png')
+        images = [dots, paperclip, paper_plane, file_black]
         self.connection.images = images
 
         main = tkinter.Frame(window, bg=Colors.MAIN_BG.value)
@@ -62,6 +60,15 @@ class Login:
 
         text = Text(input_frame, font=("Arial Bold", 12), height=1, width=25)
         text.grid(row=1, column=0, sticky="we")
+
+        password_label = Label(input_frame, text="Enter Password", font=("Arial Bold", 10),
+                               background=Colors.MAIN_BG.value, justify="left",
+                               foreground=Colors.LABEL_TEXT_COLOR.value, pady=5)
+        password_label.grid(row=2, column=0, sticky="nw")
+
+        password = Text(input_frame, font=("Arial Bold", 12), height=1, width=25)
+        password.grid(row=3, column=0, sticky="we")
+
         self.connect_button = Button(wrap_frame, bg=Colors.LOGIN_BUTTON_BG.value,
                                      foreground=Colors.LOGIN_BUTTON_FOREGROUND.value,
                                      text="Connect", width=2, height=1, font=("Arial Bold", 12), bd=0,
@@ -77,7 +84,7 @@ class Login:
         self.status_label.grid(row=3, column=0, pady=15)
         self.status_label.bind("<Button-1>", self.copy_address)
 
-        main_zone = pav.create_window(36, 20, anchor=NW, window=main)
+        pav.create_window(36, 0, anchor=NW, window=main)
         pav.pack(expand=True)
         window.mainloop()
 
