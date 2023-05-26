@@ -1,6 +1,7 @@
 import base64
 import os
 import random
+import hashlib
 
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.Random import get_random_bytes
@@ -19,30 +20,34 @@ class Encryption:
         self.size_key = 2048
         self.key_file = f"private_key.pem"
         self.key_dir = "key/private"
-        self.create_private_key()
-        self.create_public_key()
 
-    def create_private_key(self) -> None:
+    def create_private_key(self, key) -> None:
         num = random.randint(1, 300)
         self.key_file = f"privateKey_{num}.pem"
-
+        print(key)
         if not os.path.exists(self.key_dir):
             os.makedirs(self.key_dir)
 
         path = os.path.join(self.key_dir, self.key_file)
         if not os.path.exists(path):
             self.private_key = RSA.generate(self.size_key)
+            self.create_public_key()
             with open(path, "wb") as file:
-                file.write(self.private_key.exportKey())
+                file.write(AES.new(key, AES.MODE_CBC).encrypt(
+                    pad(self.private_key.exportKey(), AES.block_size)))
                 file.close()
         else:
             with open(path, "rb") as file:
-                self.private_key =RSA.importKey(file.read())
+                self.private_key = RSA.importKey(file.read())
+                self.create_public_key()
                 file.close()
 
     def create_public_key(self) -> bytes:
         self.public_key = self.private_key.publickey()
         return self.public_key
+
+    def hash(self, value):
+        return hashlib.sha256(bytes(value, "utf-8")).hexdigest()
 
     def generate_session_key(self) -> bytes:
         self.session_key = get_random_bytes(BLOCK_SIZE)

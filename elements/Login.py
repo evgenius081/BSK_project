@@ -1,6 +1,7 @@
 import tkinter as tk
 import pyperclip
 from utils.Connection import *
+import re
 
 
 class Login:
@@ -10,17 +11,29 @@ class Login:
         self.ip = self.connection.my_IP
         self.status_label = None
         self.connect_button = None
+        self.is_connecting = False
+        self.address_input = None
+        self.password_input = None
 
     def copy_address(self, event) -> None:
         pyperclip.copy(f"{self.ip}:{self.port}")
         event.widget.configure(text=f"Your IP: {self.ip}:{self.port}\nCopied")
         event.widget.after(2000, lambda: event.widget.configure(text=f"Your IP: {self.ip}:{self.port}"))
 
-    def connect_handler(self, connection_string, window) -> None:
+    def connect_handler(self, connection_string, password) -> None:
+        if not self.is_connecting and not \
+                re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}:[1-9]\d\d\d?$", connection_string):
+            self.status_label.configure(text=f"Your IP: {self.ip}:{self.port}\nProvide valid IP")
+            self.status_label.after(2000, lambda: self.status_label.configure(text=f"Your IP: {self.ip}:{self.port}"))
+            return
+        if password.strip() == "":
+            self.status_label.configure(text=f"Your IP: {self.ip}:{self.port}\nProvide valid password")
+            self.status_label.after(2000, lambda: self.status_label.configure(text=f"Your IP: {self.ip}:{self.port}"))
+            return
         ip = connection_string.split(":")[0]
         port = connection_string.split(":")[1]
         self.connect_button.configure(text="Connecting...")
-        self.connection.connect(ip, port)
+        self.connection.connect(ip, port, password)
 
     def render_login(self) -> None:
         window = Tk()
@@ -58,16 +71,16 @@ class Login:
                            foreground=Colors.LABEL_TEXT_COLOR.value, pady=5)
         text_label.grid(row=0, column=0, sticky="nw")
 
-        text = Text(input_frame, font=("Arial Bold", 12), height=1, width=25)
-        text.grid(row=1, column=0, sticky="we")
+        self.address_input = Text(input_frame, font=("Arial Bold", 12), height=1, width=25)
+        self.address_input.grid(row=1, column=0, sticky="we")
 
         password_label = Label(input_frame, text="Enter Password", font=("Arial Bold", 10),
                                background=Colors.MAIN_BG.value, justify="left",
                                foreground=Colors.LABEL_TEXT_COLOR.value, pady=5)
         password_label.grid(row=2, column=0, sticky="nw")
 
-        password = Text(input_frame, font=("Arial Bold", 12), height=1, width=25)
-        password.grid(row=3, column=0, sticky="we")
+        self.password_input = Entry(input_frame, show="*", font=("Arial Bold", 12), width=25)
+        self.password_input.grid(row=3, column=0, sticky="we")
 
         self.connect_button = Button(wrap_frame, bg=Colors.LOGIN_BUTTON_BG.value,
                                      foreground=Colors.LOGIN_BUTTON_FOREGROUND.value,
@@ -75,7 +88,8 @@ class Login:
                                      highlightthickness=0,
                                      cursor='hand2')
         self.connect_button.grid(row=2, column=0, sticky="we", pady=20)
-        self.connect_button.configure(command=lambda: self.connect_handler(text.get(1.0, "end-1c"), window))
+        self.connect_button.configure(command=lambda: self.connect_handler(self.address_input.get(1.0, "end-1c"),
+                                                                           self.password_input.get()))
 
         self.status_label = Label(wrap_frame, text=f"Your IP: {self.ip}:{self.port}", font=("Arial Bold", 10),
                                   background=Colors.MAIN_BG.value, justify="center",
@@ -87,4 +101,3 @@ class Login:
         pav.create_window(36, 0, anchor=NW, window=main)
         pav.pack(expand=True)
         window.mainloop()
-
