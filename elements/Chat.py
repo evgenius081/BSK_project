@@ -60,7 +60,8 @@ class Chat:
         txt.delete('1.0', END)
         txt.insert("1.0", "Write a message...")
         if self.file_attached:
-            pass
+            self.connection.send_file(self.current_file, self.cipher)
+            self.canvas.yview_moveto(1)
         elif len(message_txt) > 0:
             self.connection.send_message(message_txt, self.cipher)
             self.canvas.yview_moveto(1)
@@ -91,6 +92,7 @@ class Chat:
             self.message_frame.update_idletasks()
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
             self.canvas.yview_moveto(1)
+            return file_message
 
     def render_chat(self, window, images) -> None:
         for widget in window.winfo_children():

@@ -12,27 +12,29 @@ class FileMessage:
         self.frame_width = 0
         self.status_label = None
         self.author = None
+        self.message = None
 
     def start_sending(self):
         self.status_label.grid_forget()
         self.file_sending_procent.grid(row=1, column=0, sticky="nw")
 
-    def update_file_sending_procent(self, procent, message):
+    def update_file_sending_procent(self, procent):
         if procent == 100:
             self.file_sending_procent.grid_forget()
             self.file_sending_procent.destroy()
             if self.author == "partner":
                 self.status_label.grid(row=1, column=0, sticky="ne")
-                self.status_label.config(text=f"{message.cipher_mode.value} ● {message.datetime.strftime('%H:%M')}")
+                self.status_label.config(text=f"{self.message.cipher_mode.value} ● {self.message.datetime.strftime('%H:%M')}")
             elif self.author == "me":
                 self.status_label.grid(row=1, column=0, sticky="nw")
                 self.status_label.config(bg=Colors.MY_MESSAGE_BG.value,
-                                         text=f"{message.datetime.strftime('%H:%M')} ● {message.cipher_mode.value}")
+                                         text=f"{self.message.datetime.strftime('%H:%M')} ● {self.message.cipher_mode.value}")
         else:
             self.file_sending_procent.config(width=int(procent * self.frame_width / 100))
 
     def file_message(self, parent, message, message_id, images) -> None:
         [a, b, c, file_black] = images
+        self.message = message
         self.author = message.author_id
         frame = Frame(parent)
         frame.grid_columnconfigure(0, weight=1)
@@ -81,8 +83,3 @@ class FileMessage:
 
         text.config(state="disabled")
         text_frame.grid(row=0, column=0, sticky="w")
-
-        self.start_sending()
-        self.update_file_sending_procent(50, message)
-        self.update_file_sending_procent(100, message)
-
