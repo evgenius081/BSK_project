@@ -7,6 +7,7 @@ from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 from Crypto.PublicKey import RSA
+from timeit import default_timer as timer
 from classes.CipherModes import *
 
 BLOCK_SIZE = 16
@@ -24,30 +25,24 @@ class Encryption:
     def create_private_key(self, key) -> None:
         num = random.randint(1, 300)
         self.key_file = f"privateKey_{num}.pem"
-        print(key)
         if not os.path.exists(self.key_dir):
             os.makedirs(self.key_dir)
 
         path = os.path.join(self.key_dir, self.key_file)
-        if not os.path.exists(path):
-            self.private_key = RSA.generate(self.size_key)
-            self.create_public_key()
-            with open(path, "wb") as file:
-                file.write(AES.new(key, AES.MODE_CBC).encrypt(
-                    pad(self.private_key.exportKey(), AES.block_size)))
-                file.close()
-        else:
-            with open(path, "rb") as file:
-                self.private_key = RSA.importKey(file.read())
-                self.create_public_key()
-                file.close()
+        self.private_key = RSA.generate(self.size_key)
+        self.create_public_key()
+        with open(path, "wb") as file:
+            iv = get_random_bytes(BLOCK_SIZE)
+            file.write(AES.new(key, AES.MODE_CBC, iv).encrypt(
+                pad(self.private_key.exportKey(), BLOCK_SIZE)))
+            file.close()
 
     def create_public_key(self) -> bytes:
         self.public_key = self.private_key.publickey()
         return self.public_key
 
     def hash(self, value):
-        return hashlib.sha256(bytes(value, "utf-8")).hexdigest()
+        return hashlib.sha256(bytes(value, "utf-8")).digest()
 
     def generate_session_key(self) -> bytes:
         self.session_key = get_random_bytes(BLOCK_SIZE)
@@ -76,6 +71,63 @@ class Encryption:
         if mode == AES.MODE_CBC:
             cipher = AES.new(key, mode, enc[:BLOCK_SIZE])
             return unpad(cipher.decrypt(enc[BLOCK_SIZE:]), BLOCK_SIZE)
+
+    def encrypt_file(self, in_file, out_file=None, mode=AES.MODE_ECB, chunk_size=1024 * 1024) -> str:
+        key = self.session_key
+
+        if not out_file:
+            out_file = in_file + '.enc'
+
+        if mode == AES.MODE_ECB:
+            cipher = AES.new(key, mode)
+        else:
+            iv = get_random_bytes(BLOCK_SIZE)
+            cipher = AES.new(key, mode, iv)
+
+        with open(in_file, 'rb') as infile:
+            with open(out_file, 'wb') as outfile:
+                if mode is not AES.MODE_ECB:
+                    outfile.write(iv)
+
+                while True:
+                    chunk = infile.read(chunk_size)
+                    if len(chunk) == 0:
+                        break
+                    elif len(chunk) % 16 != 0:
+                        chunk += (' ' * (16 - len(chunk) % 16)).encode("utf-8")
+
+                    outfile.write(cipher.encrypt(chunk))
+
+        return out_file
+
+    def decrypt_file(self, in_file, size, out_file=None, mode=AES.MODE_ECB, chunk_size=1024 * 1024) -> str:
+        start_timer = timer()
+        key = self.session_key
+        if not out_file:
+            out_file = os.path.splitext(in_file)[0]
+
+        with open(in_file, 'rb') as infile:
+            original_size = size
+
+            if mode == AES.MODE_ECB:
+                cipher = AES.new(key, mode)
+            else:
+                iv = infile.read(16)
+                cipher = AES.new(key, mode, iv)
+
+            with open(out_file, 'wb') as outfile:
+                while True:
+                    chunk = infile.read(chunk_size)
+                    if len(chunk) == 0:
+                        break
+                    cip = cipher.decrypt(chunk)
+                    outfile.write(cip)
+
+                outfile.truncate(original_size)
+
+        end_timer = timer()
+        print("Decrypting file time is", end_timer - start_timer)
+        return out_file
 
     def encrypt_key(self, public_key, data) -> bytes:
         cipher = PKCS1_OAEP.new(public_key)

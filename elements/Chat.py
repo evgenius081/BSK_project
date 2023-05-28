@@ -9,12 +9,6 @@ from elements.TextMessage import *
 from classes.DecryptedMessage import DecryptedTextMessage, DecryptedFileMessage
 
 
-def focus_in(event) -> None:
-    event.widget.configure(font=("Verdana", 12), width=72, foreground="#ffffff")
-    if event.widget.get("1.0", "end-1c") == "Write a message...":
-        event.widget.delete("1.0", "end-1c")
-
-
 def focus_out(event) -> None:
     if event.widget.compare("end-1c", "==", "1.0"):
         event.widget.configure(font=("Verdana", 10), width=90, foreground="#eeeeee")
@@ -23,6 +17,7 @@ def focus_out(event) -> None:
 
 def handle_a(default_value) -> None:
     pass
+
 
 def change_format(bt, settings) -> None:
     try:
@@ -48,19 +43,33 @@ class Chat:
         self.current_file = None
         self.file_attached = False
 
+    def file_sent(self, ):
+        self.file_attached = False
+        self.current_file = None
+        self.text.configure(state=NORMAL)
+        self.text.delete("1.0", "end-1c")
+        self.text.configure(font=("Verdana", 12), width=72, foreground="#ffffff")
+
+    def focus_in(self, event) -> None:
+        if not self.file_attached:
+            event.widget.configure(font=("Verdana", 12), width=72, foreground="#ffffff")
+            if event.widget.get("1.0", "end-1c") == "Write a message...":
+                event.widget.delete("1.0", "end-1c")
+
     def attach_file(self):
         self.current_file = filedialog.askopenfilename()
+        self.text.configure(font=("Verdana", 10), width=90, foreground="#eeeeee")
         self.text.delete("1.0", "end-1c")
         self.text.insert("1.0", f"file: {self.current_file}")
+        self.text.configure(state=DISABLED)
         self.file_attached = True
-        print(self.current_file)
 
     def send_message(self, txt):
         message_txt = txt.get('1.0', END).strip()
         txt.delete('1.0', END)
-        txt.insert("1.0", "Write a message...")
         if self.file_attached:
-            pass
+            self.connection.send_file(self.current_file, self.cipher)
+            self.canvas.yview_moveto(1)
         elif len(message_txt) > 0:
             self.connection.send_message(message_txt, self.cipher)
             self.canvas.yview_moveto(1)
@@ -81,7 +90,7 @@ class Chat:
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
             self.canvas.yview_moveto(1)
 
-    def add_file_message(self, message, author, images) -> None:
+    def add_file_message(self, message, author, images) -> FileMessage:
         with self.lock:
             self.messages.append(message)
             file_message = FileMessage()
@@ -91,6 +100,7 @@ class Chat:
             self.message_frame.update_idletasks()
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
             self.canvas.yview_moveto(1)
+            return file_message
 
     def render_chat(self, window, images) -> None:
         for widget in window.winfo_children():
@@ -98,7 +108,6 @@ class Chat:
         window.title(f"Messenger with connected {self.connection.IP}:{self.connection.port}")
         window.geometry('863x505')
         window["bg"] = Colors.MAIN_BG.value
-        # window.resizable(False, False)
         pav = Canvas(window, bd=0, bg=Colors.MAIN_BG.value, confine=True, height=505, width=863, highlightthickness=0)
 
         main = tkinter.Frame(window, bg=Colors.BUTTON_BG.value)
@@ -137,15 +146,15 @@ class Chat:
         self.message_frame.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
-        main_zone = pav.create_window(0, 0, anchor=NW, window=main)
+        pav.create_window(0, 0, anchor=NW, window=main)
         pav.pack()
 
     def controls(self, main, images) -> None:
         self.text = Text(main, width=90, height=1, font=("Verdana", 10), wrap=WORD, padx=10, pady=6, bd=0,
                          bg=Colors.BUTTON_BG.value, insertbackground="white", foreground="#eeeeee")
         self.text.grid(row=1, column=2, rowspan=1)
-        self.text.insert(INSERT, "Write a message...")
-        self.text.bind("<FocusIn>", focus_in)
+        self.text.insert(1.0, "Write a message...")
+        self.text.bind("<FocusIn>", self.focus_in)
         self.text.bind("<FocusOut>", focus_out)
         self.text.bind("<Return>", self.enter_handler)
 
