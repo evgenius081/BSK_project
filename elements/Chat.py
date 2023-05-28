@@ -43,7 +43,7 @@ class Chat:
         self.current_file = None
         self.file_attached = False
 
-    def file_sent(self, ):
+    def file_sent(self) -> None:
         self.file_attached = False
         self.current_file = None
         self.text.configure(state=NORMAL)
@@ -56,7 +56,7 @@ class Chat:
             if event.widget.get("1.0", "end-1c") == "Write a message...":
                 event.widget.delete("1.0", "end-1c")
 
-    def attach_file(self):
+    def attach_file(self) -> None:
         self.current_file = filedialog.askopenfilename()
         self.text.configure(font=("Verdana", 10), width=90, foreground="#eeeeee")
         self.text.delete("1.0", "end-1c")
@@ -64,7 +64,7 @@ class Chat:
         self.text.configure(state=DISABLED)
         self.file_attached = True
 
-    def send_message(self, txt):
+    def send_message(self, txt) -> None:
         message_txt = txt.get('1.0', END).strip()
         txt.delete('1.0', END)
         if self.file_attached:

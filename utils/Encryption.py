@@ -8,7 +8,6 @@ from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 from Crypto.PublicKey import RSA
 from timeit import default_timer as timer
-from classes.CipherModes import *
 
 BLOCK_SIZE = 16
 
@@ -41,7 +40,7 @@ class Encryption:
         self.public_key = self.private_key.publickey()
         return self.public_key
 
-    def hash(self, value):
+    def hash(self, value) -> bytes:
         return hashlib.sha256(bytes(value, "utf-8")).digest()
 
     def generate_session_key(self) -> bytes:

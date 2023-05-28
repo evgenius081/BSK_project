@@ -122,7 +122,7 @@ class Connection:
         message["data"] = text
         self.chat.add_text_message(message, "me")
 
-    def _send_file(self, path, mode):
+    def _send_file(self, path, mode) -> None:
         if not os.path.exists(ENCRYPT_FOLDER):
             os.makedirs(ENCRYPT_FOLDER)
 
@@ -164,7 +164,7 @@ class Connection:
         os.remove(path_to_encrypted_file)
         self.in_progress = False
 
-    def receive_file(self, conn, message):
+    def receive_file(self, conn, message) -> None:
         if not os.path.exists(DOWNLOAD_FOLDER):
             os.makedirs(DOWNLOAD_FOLDER)
         filename = message["filename"]
@@ -203,8 +203,8 @@ class Connection:
         file_message.update_decrypted(real_filename)
         os.remove(path)
 
-    def send_file(self, path, mod):
+    def send_file(self, path, mod) -> None:
         Thread(target=self._send_file, args=(path, mod,)).start()
 
-    def send_message(self, text, mode):
+    def send_message(self, text, mode) -> None:
         Thread(target=self._send_message, args=(text, mode,)).start()

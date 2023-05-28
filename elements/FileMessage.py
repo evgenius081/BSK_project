@@ -1,7 +1,5 @@
 import datetime
 import os
-import threading
-import time
 from tkinter import *
 from Colors import Colors
 import tkinter.font as tkFont
@@ -19,17 +17,17 @@ class FileMessage:
         self.message = None
         self.real_filename = None
 
-    def start_sending(self):
+    def start_sending(self) -> None:
         self.status_label.grid_forget()
         self.file_sending_procent.grid(row=1, column=0, sticky="nw")
 
-    def update_decrypted(self, real_filename):
+    def update_decrypted(self, real_filename) -> None:
         self.status_label.config(bg=Colors.MESSAGE_BG.value,
                                  text=f"{self.message.cipher_mode.value} ● "
                                       f"{datetime.datetime.now().strftime('%H:%M')}")
         self.real_filename = real_filename
 
-    def update_file_sending_procent(self, procent):
+    def update_file_sending_procent(self, procent) -> None:
         if procent == 100:
             if self.file_sending_procent.winfo_exists():
                 self.file_sending_procent.grid_forget()
