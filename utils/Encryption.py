@@ -25,7 +25,6 @@ class Encryption:
     def create_private_key(self, key) -> None:
         num = random.randint(1, 300)
         self.key_file = f"privateKey_{num}.pem"
-        print(len(key))
         if not os.path.exists(self.key_dir):
             os.makedirs(self.key_dir)
 

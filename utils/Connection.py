@@ -1,6 +1,7 @@
 import os
 import pickle
 import socket
+import sys
 from timeit import default_timer as timer
 from threading import *
 
@@ -12,6 +13,8 @@ from utils.Encryption import Encryption
 from classes.CipherModes import CipherMethods
 
 BUFFER_SIZE = 8192
+ENCRYPT_FOLDER = "enc"
+DOWNLOAD_FOLDER = "downloads"
 
 
 class Connection:
@@ -55,7 +58,6 @@ class Connection:
                 self.login.address_input.delete("1.0", END)
                 self.login.address_input.insert("1.0", f"127.0.0.1:{self.port}")
                 self.login.address_input.configure(state=DISABLED)
-            # add cypher of session key by public key
         elif message["type"] == "text":
             text = self.decrypt_data(message["data"], message["mode"])
             message["data"] = text
@@ -77,8 +79,6 @@ class Connection:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((ip, int(port)))
             self.encryption.create_private_key(self.encryption.hash(password))
-            # send public key
-            # if not self.login.is_connecting:
             greetings = {"type": "greetings", "port": self.my_port,
                          "public_key": self.encryption.public_key.exportKey()}
             sock.sendall(pickle.dumps(greetings))
@@ -95,6 +95,7 @@ class Connection:
         self.login.address_input.configure(state=DISABLED)
         self.chat = Chat(self.login.connection)
         self.chat.render_chat(self.login_window, self.images)
+        sys.exit()
 
     def connect(self, ip, port, password) -> None:
         Thread(target=self._connect, args=(ip, port, password,)).start()
@@ -112,7 +113,6 @@ class Connection:
             return self.encryption.encrypt_mode(data, AES.MODE_CBC)
 
     def _send_message(self, text, mode) -> None:
-        # add mode
         enc = self.encrypt_data(text, mode)
         message = {"type": "text", "data": enc, "mode": mode}
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -121,26 +121,23 @@ class Connection:
             sock.sendall(pickle.dumps(message))
         message["data"] = text
         self.chat.add_text_message(message, "me")
-        # self.chat.add_file_message({"type": "file", "filename": "paperclip-white-min.png", "mode": mode}, "me", self.images)
-        # self.chat.add_file_message({"type": "file", "filename": "paperclip-white-min.png", "mode": mode}, "partner", self.images)
 
     def _send_file(self, path, mode):
-        FOLDER = "enc"
-
-        if not os.path.exists(FOLDER):
-            os.makedirs(FOLDER)
+        if not os.path.exists(ENCRYPT_FOLDER):
+            os.makedirs(ENCRYPT_FOLDER)
 
         filename = os.path.split(path)[1]
         filesize = os.path.getsize(path)
-        path_to_encrypted_file = os.path.join(FOLDER, filename + ".enc")
+        path_to_encrypted_file = os.path.join(ENCRYPT_FOLDER, filename + ".enc")
         start_timer = timer()
         message = {"type": "file", "filename": filename + ".enc", "size": filesize, "mode": mode}
-        if mode == CipherMethods.ECB: mode = AES.MODE_ECB
-        if mode == CipherMethods.CBC: mode = AES.MODE_CBC
-
+        if mode == CipherMethods.ECB:
+            mode = AES.MODE_ECB
+        elif mode == CipherMethods.CBC:
+            mode = AES.MODE_CBC
 
         end_timer = timer()
-        print("Encryption time is", end_timer - start_timer)
+        print("Encryption time:", end_timer - start_timer)
 
         sent_data_size = 0
         start_timer = timer()
@@ -148,6 +145,7 @@ class Connection:
             sock.connect((self.IP, self.port))
             sock.sendall(pickle.dumps(message))
             self.in_progress = True
+            message["filename"] = message["filename"][:len(message["filename"]) - 4]
             file_message = self.chat.add_file_message(message, "me", self.images)
             self.encryption.encrypt_file(path, path_to_encrypted_file, mode)
             file_message.start_sending()
@@ -155,30 +153,44 @@ class Connection:
                 data = file.read(self.BUFFER_SIZE_FILE)
                 while data:
                     sent_data_size += self.BUFFER_SIZE_FILE
-                    # self.sending_progress = sent_data_size / filesize * 100
                     file_message.update_file_sending_procent(int(sent_data_size / filesize * 100))
                     sock.sendall(data)
                     data = file.read(self.BUFFER_SIZE_FILE)
                 file_message.update_file_sending_procent(100)
-        end_timer = timer()
-        print("Sending time is", end_timer - start_timer)
+                self.chat.file_sent()
+                end_timer = timer()
+        print("Sending time:", end_timer - start_timer)
 
         os.remove(path_to_encrypted_file)
-        # self.sending_progress = 0
         self.in_progress = False
 
     def receive_file(self, conn, message):
-        FILE_PATH = "downloads"
-        if not os.path.exists(FILE_PATH):
-            os.makedirs(FILE_PATH)
+        if not os.path.exists(DOWNLOAD_FOLDER):
+            os.makedirs(DOWNLOAD_FOLDER)
         filename = message["filename"]
         message["filename"] = message["filename"][:len(message["filename"]) - 4]
         size = message["size"]
         mode = message["mode"]
-        if mode == CipherMethods.ECB: mode = AES.MODE_ECB
-        if mode == CipherMethods.CBC: mode = AES.MODE_CBC
+        if mode == CipherMethods.ECB:
+            mode = AES.MODE_ECB
+        elif mode == CipherMethods.CBC:
+            mode = AES.MODE_CBC
 
-        path = os.path.join(FILE_PATH, filename)
+        path = os.path.join(DOWNLOAD_FOLDER, filename)
+
+        real_filename = filename
+
+        if os.path.exists(os.getcwd()+"\\"+path[:len(path) - 4]):
+            path_temp = path[:len(path) - 4]
+            count = 1
+            while True:
+                new_path = path_temp[:path_temp.rfind(".")]+f" ({count})"+path_temp[path_temp.rfind("."):]
+                if not os.path.exists(os.getcwd()+"\\"+new_path):
+                    path = new_path+".enc"
+                    real_filename = (path_temp[:path_temp.rfind(".")]+f" ({count})" +
+                                     path_temp[path_temp.rfind("."):])
+                    break
+                count += 1
 
         with open(path, "wb") as file:
             data = conn.recv(self.BUFFER_SIZE_FILE)
@@ -186,9 +198,9 @@ class Connection:
                 file.write(data)
                 data = conn.recv(self.BUFFER_SIZE_FILE)
 
-        # self.encryptor.decrypt_file(path, size)
+        file_message = self.chat.add_file_message(message, "partner", self.images)
         self.encryption.decrypt_file(path, size, mode=mode)
-        self.chat.add_file_message(message, "partner", self.images)
+        file_message.update_decrypted(real_filename)
         os.remove(path)
 
     def send_file(self, path, mod):
