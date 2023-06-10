@@ -42,6 +42,8 @@ class Chat:
         self.default_value = None
         self.current_file = None
         self.file_attached = False
+        self.send_button = None
+        self.text = None
 
     def file_sent(self) -> None:
         self.file_attached = False
@@ -57,12 +59,29 @@ class Chat:
                 event.widget.delete("1.0", "end-1c")
 
     def attach_file(self) -> None:
-        self.current_file = filedialog.askopenfilename()
-        self.text.configure(font=("Verdana", 10), width=90, foreground="#eeeeee")
-        self.text.delete("1.0", "end-1c")
-        self.text.insert("1.0", f"file: {self.current_file}")
-        self.text.configure(state=DISABLED)
-        self.file_attached = True
+        chosen_file = filedialog.askopenfilename()
+        if chosen_file != "":
+            self.current_file = chosen_file
+            self.text.configure(font=("Verdana", 10), width=90, foreground="#eeeeee")
+            self.text.delete("1.0", "end-1c")
+            self.text.insert("1.0", f"file: {self.current_file}")
+            self.text.configure(state=DISABLED)
+            self.file_attached = True
+
+    def set_disconnected(self):
+        disconnected_message = Frame(self.message_frame, bg=Colors.MAIN_BG.value, width=850)
+        self.messages.append(disconnected_message)
+        disconnected_message.grid(row=self.messages.index(disconnected_message), column=0, columnspan=2)
+
+        disconnected_frame = Frame(disconnected_message, bg=Colors.MESSAGE_BG.value, width=850, height=2)
+        disconnected_frame.grid(row=0, column=0)
+
+        disconnected_label = Label(disconnected_message, bg=Colors.MAIN_BG.value, foreground=Colors.MESSAGE_BG.value,
+                                   font=("Verdana", "12"),
+                                   text=f"{self.connection.IP}:{self.connection.port} disconnected", justify=CENTER)
+        disconnected_label.grid(row=0, column=0)
+        self.send_button.config(state=DISABLED)
+        self.text.unbind("<Return>")
 
     def send_message(self, txt) -> None:
         message_txt = txt.get('1.0', END).strip()
@@ -84,8 +103,8 @@ class Chat:
     def add_text_message(self, message, author) -> None:
         with self.lock:
             self.messages.append(message)
-            text_message(self.message_frame, DecryptedTextMessage(author, message["data"], datetime.now(), message["mode"]),
-                         len(self.messages)-1)
+            text_message(self.message_frame, DecryptedTextMessage(author, message["data"], datetime.now(),
+                                                                  message["mode"]), len(self.messages)-1)
             self.message_frame.update_idletasks()
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
             self.canvas.yview_moveto(1)
@@ -105,7 +124,7 @@ class Chat:
     def render_chat(self, window, images) -> None:
         for widget in window.winfo_children():
             widget.destroy()
-        window.title(f"Messenger with connected {self.connection.IP}:{self.connection.port}")
+        window.title(f"Messenger")
         window.geometry('863x505')
         window["bg"] = Colors.MAIN_BG.value
         pav = Canvas(window, bd=0, bg=Colors.MAIN_BG.value, confine=True, height=505, width=863, highlightthickness=0)
@@ -135,6 +154,19 @@ class Chat:
         self.message_frame = tkinter.Frame(self.canvas, bg=Colors.MAIN_BG.value)
         self.message_frame.grid_columnconfigure(0, weight=1)
         self.message_frame.grid_columnconfigure(1, weight=1)
+
+        connected_message = Frame(self.message_frame, bg=Colors.MAIN_BG.value, width=850)
+        connected_message.grid(row=0, column=0, columnspan=2)
+        self.messages.append(connected_message)
+
+        connected_frame = Frame(connected_message, bg=Colors.MESSAGE_BG.value, width=850, height=2)
+        connected_frame.grid(row=0, column=0)
+
+        connected_label = Label(connected_message, bg=Colors.MAIN_BG.value, foreground=Colors.MESSAGE_BG.value,
+                                font=("Verdana", "12"),
+                                text=f"Connected with {self.connection.IP}:{self.connection.port}", justify=CENTER)
+        connected_label.grid(row=0, column=0)
+
         self.canvas.create_window((0, 5), window=self.message_frame, anchor='nw', width=850)
 
         def on_mousewheel(event) -> None:
@@ -176,15 +208,16 @@ class Chat:
                                bg=Colors.BUTTON_BG.value, fg="white", justify="left", disabledforeground="white",
                                activebackground=Colors.BUTTON_BG.value, activeforeground="white", relief=FLAT,
                                cursor='hand2')
-        send_button = Button(main, image=paper_plane, height=32, width=35, compound="bottom", font=("Arial Bold", 16),
-                             bg=Colors.BUTTON_BG.value, fg="white", justify="left", disabledforeground="white",
-                             activebackground=Colors.BUTTON_BG.value, activeforeground="white", relief=FLAT, cursor='hand2')
+        self.send_button = Button(main, image=paper_plane, height=32, width=35, compound="bottom",
+                                  font=("Arial Bold", 16), bg=Colors.BUTTON_BG.value, fg="white", justify="left",
+                                  disabledforeground="white", activebackground=Colors.BUTTON_BG.value,
+                                  activeforeground="white", relief=FLAT, cursor='hand2')
 
-        send_button.config(command=lambda: self.send_message(self.text))
+        self.send_button.config(command=lambda: self.send_message(self.text))
         attach_button.config(command=lambda: self.attach_file())
         more_button.config(command=lambda: change_format(more_button, settings=settings))
 
         more_button.grid(row=1, column=0)
         attach_button.grid(row=1, column=1)
-        send_button.grid(row=1, column=3)
+        self.send_button.grid(row=1, column=3)
 

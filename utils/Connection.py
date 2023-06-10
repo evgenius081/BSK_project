@@ -2,6 +2,7 @@ import os
 import pickle
 import socket
 import sys
+import time
 from timeit import default_timer as timer
 from threading import *
 
@@ -37,7 +38,6 @@ class Connection:
     def receive(self, connection) -> None:
         data = connection.recv(BUFFER_SIZE)
         message = pickle.loads(data)
-        print(message)
         key = None
 
         if "public_key" in message:
@@ -52,6 +52,7 @@ class Connection:
                 self.chat = Chat(self.login.connection)
                 self.chat.render_chat(self.login_window, self.images)
                 connection.sendall(pickle.dumps(key_change))
+                Thread(target=self.connection_check).start()
             else:
                 self.login.is_connecting = True
                 self.login.status_label.configure(text=f"127.0.0.1:{self.port} wants to connect\nProvide password")
@@ -65,6 +66,7 @@ class Connection:
         elif message["type"] == "file":
             Thread(target=self.receive_file, args=(connection, message,)).start()
 
+
     def _listen(self) -> None:
         while True:
             try:
@@ -73,6 +75,20 @@ class Connection:
                 Thread(target=self.receive, args=(connection,)).start()
             except OSError:
                 pass
+
+    def connection_check(self):
+        while True:
+            time.sleep(1)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                try:
+                    sock.connect((self.IP, self.port))
+                    message = {"type": "check"}
+                    sock.sendall(pickle.dumps(message))
+                except Exception:
+                    self.chat.set_disconnected()
+                    break
+
+        sys.exit()
 
     def _connect(self, ip, port, password) -> None:
         print(f"connecting to: {ip}:{port}")
@@ -83,18 +99,21 @@ class Connection:
                          "public_key": self.encryption.public_key.exportKey()}
             sock.sendall(pickle.dumps(greetings))
             self.login.is_connecting = True
-            result = sock.recv(BUFFER_SIZE)
-            message = pickle.loads(result)
-            self.encryption.session_key = self.encryption.decrypt_key(self.encryption.private_key,
-                                                                      message["session_key"])
+            try:
+                result = sock.recv(BUFFER_SIZE)
+                message = pickle.loads(result)
+                self.encryption.session_key = self.encryption.decrypt_key(self.encryption.private_key,
+                                                                          message["session_key"])
+            except EOFError:
+                pass
 
         self.IP = ip
         self.port = int(port)
         self.found_partner = True
-        self.login.password_input.configure(state=DISABLED)
-        self.login.address_input.configure(state=DISABLED)
         self.chat = Chat(self.login.connection)
         self.chat.render_chat(self.login_window, self.images)
+        Thread(target=self.connection_check).start()
+
         sys.exit()
 
     def connect(self, ip, port, password) -> None:
@@ -129,26 +148,25 @@ class Connection:
         filename = os.path.split(path)[1]
         filesize = os.path.getsize(path)
         path_to_encrypted_file = os.path.join(ENCRYPT_FOLDER, filename + ".enc")
-        start_timer = timer()
         message = {"type": "file", "filename": filename + ".enc", "size": filesize, "mode": mode}
         if mode == CipherMethods.ECB:
             mode = AES.MODE_ECB
         elif mode == CipherMethods.CBC:
             mode = AES.MODE_CBC
 
-        end_timer = timer()
-        print("Encryption time:", end_timer - start_timer)
-
         sent_data_size = 0
-        start_timer = timer()
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((self.IP, self.port))
             sock.sendall(pickle.dumps(message))
             self.in_progress = True
             message["filename"] = message["filename"][:len(message["filename"]) - 4]
             file_message = self.chat.add_file_message(message, "me", self.images)
+            start_timer = timer()
             self.encryption.encrypt_file(path, path_to_encrypted_file, mode)
+            end_timer = timer()
+            print("Encryption time:", end_timer - start_timer)
             file_message.start_sending()
+            start_timer = timer()
             with open(path_to_encrypted_file, "rb") as file:
                 data = file.read(self.BUFFER_SIZE_FILE)
                 while data:
@@ -163,6 +181,7 @@ class Connection:
 
         os.remove(path_to_encrypted_file)
         self.in_progress = False
+
 
     def receive_file(self, conn, message) -> None:
         if not os.path.exists(DOWNLOAD_FOLDER):
