@@ -199,7 +199,7 @@ class Chat:
         settings.add_radiobutton(label="ECB", font=("Verdana", "12"), command=lambda: self.handle_setting("ECB"),
                                  variable=self.default_value, value="ECB")
 
-        [dots, paperclip, paper_plane, file_black] = images
+        [dots, paperclip, paper_plane, file_black, arrow_up, lock] = images
 
         more_button = Button(main, image=dots, height=32, width=35, compound="bottom", font=("Arial Bold", 16),
                              bg=Colors.BUTTON_BG.value, fg="white", justify="left", disabledforeground="white",

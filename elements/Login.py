@@ -50,7 +50,9 @@ class Login:
         dots = PhotoImage(file='img/dots-white-min.png')
         paper_plane = PhotoImage(file='img/paper-plane-white-min.png')
         file_black = PhotoImage(file='img/file_black_min.png')
-        images = [dots, paperclip, paper_plane, file_black]
+        arrow_up = PhotoImage(file='img/arrow-up-from-bracket-min.png')
+        lock = PhotoImage(file='img/lock-min.png')
+        images = [dots, paperclip, paper_plane, file_black, arrow_up, lock]
         self.connection.images = images
 
         main = tkinter.Frame(window, bg=Colors.MAIN_BG.value)

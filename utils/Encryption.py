@@ -20,6 +20,7 @@ class Encryption:
         self.size_key = 2048
         self.key_file = f"private_key.pem"
         self.key_dir = "key/private"
+        self.chat = None
 
     def create_private_key(self, key) -> None:
         num = random.randint(1, 300)
@@ -71,7 +72,7 @@ class Encryption:
             cipher = AES.new(key, mode, enc[:BLOCK_SIZE])
             return unpad(cipher.decrypt(enc[BLOCK_SIZE:]), BLOCK_SIZE)
 
-    def encrypt_file(self, in_file, out_file=None, mode=AES.MODE_ECB, chunk_size=1024 * 1024) -> str:
+    def encrypt_file(self, in_file, file_message, out_file=None, mode=AES.MODE_ECB, chunk_size=1024 * 1024) -> str:
         key = self.session_key
 
         if not out_file:
@@ -88,18 +89,22 @@ class Encryption:
                 if mode is not AES.MODE_ECB:
                     outfile.write(iv)
 
+                in_file_size = os.path.getsize(in_file)
+                counter = 0
+                file_message.set_encrypting()
                 while True:
                     chunk = infile.read(chunk_size)
+                    counter += chunk_size
+                    file_message.update_procent(int(counter/in_file_size * 100))
                     if len(chunk) == 0:
                         break
                     elif len(chunk) % 16 != 0:
                         chunk += (' ' * (16 - len(chunk) % 16)).encode("utf-8")
 
                     outfile.write(cipher.encrypt(chunk))
-
         return out_file
 
-    def decrypt_file(self, in_file, size, out_file=None, mode=AES.MODE_ECB, chunk_size=1024 * 1024) -> str:
+    def decrypt_file(self, in_file, size, file_message, out_file=None, mode=AES.MODE_ECB, chunk_size=1024 * 1024) -> str:
         start_timer = timer()
         key = self.session_key
         if not out_file:
@@ -107,16 +112,20 @@ class Encryption:
 
         with open(in_file, 'rb') as infile:
             original_size = size
+            counter = 0
 
             if mode == AES.MODE_ECB:
                 cipher = AES.new(key, mode)
             else:
                 iv = infile.read(16)
+                original_size -= 16
                 cipher = AES.new(key, mode, iv)
 
             with open(out_file, 'wb') as outfile:
                 while True:
                     chunk = infile.read(chunk_size)
+                    counter += chunk_size
+                    file_message.update_procent(int(counter / original_size * 100))
                     if len(chunk) == 0:
                         break
                     cip = cipher.decrypt(chunk)

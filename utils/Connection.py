@@ -162,19 +162,20 @@ class Connection:
             message["filename"] = message["filename"][:len(message["filename"]) - 4]
             file_message = self.chat.add_file_message(message, "me", self.images)
             start_timer = timer()
-            self.encryption.encrypt_file(path, path_to_encrypted_file, mode)
+            self.encryption.encrypt_file(path, file_message, path_to_encrypted_file, mode)
             end_timer = timer()
             print("Encryption time:", end_timer - start_timer)
-            file_message.start_sending()
+            file_message.set_sending()
             start_timer = timer()
             with open(path_to_encrypted_file, "rb") as file:
                 data = file.read(self.BUFFER_SIZE_FILE)
                 while data:
                     sent_data_size += self.BUFFER_SIZE_FILE
-                    file_message.update_file_sending_procent(int(sent_data_size / filesize * 100))
+                    file_message.update_procent(int(sent_data_size / filesize * 100))
                     sock.sendall(data)
                     data = file.read(self.BUFFER_SIZE_FILE)
-                file_message.update_file_sending_procent(100)
+                file_message.set_sent()
+                file_message.set_message_info()
                 self.chat.file_sent()
                 end_timer = timer()
         print("Sending time:", end_timer - start_timer)
@@ -218,7 +219,7 @@ class Connection:
                 data = conn.recv(self.BUFFER_SIZE_FILE)
 
         file_message = self.chat.add_file_message(message, "partner", self.images)
-        self.encryption.decrypt_file(path, size, mode=mode)
+        self.encryption.decrypt_file(path, size, file_message, mode=mode)
         file_message.update_decrypted(real_filename)
         os.remove(path)
 
