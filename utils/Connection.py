@@ -38,17 +38,14 @@ class Connection:
     def receive(self, connection) -> None:
         data = connection.recv(BUFFER_SIZE)
         message = pickle.loads(data)
-        key = None
-
-        if "public_key" in message:
-            self.encryption.generate_session_key()
-            another_user_key = RSA.import_key(message["public_key"])
-            key = self.encryption.encrypt_key(another_user_key, self.encryption.session_key)
 
         if message["type"] == "greetings":
-            key_change = {"type": "key", "session_key": key}
             self.port = int(message["port"])
             if self.login.is_connecting:
+                self.encryption.generate_session_key()
+                another_user_key = RSA.import_key(message["public_key"])
+                key = self.encryption.encrypt_key(another_user_key, self.encryption.session_key)
+                key_change = {"type": "key", "session_key": key}
                 self.chat = Chat(self.login.connection)
                 self.chat.render_chat(self.login_window, self.images)
                 connection.sendall(pickle.dumps(key_change))
@@ -65,7 +62,6 @@ class Connection:
             self.chat.add_text_message(message, "partner")
         elif message["type"] == "file":
             Thread(target=self.receive_file, args=(connection, message,)).start()
-
 
     def _listen(self) -> None:
         while True:
@@ -86,9 +82,7 @@ class Connection:
                     sock.sendall(pickle.dumps(message))
                 except Exception:
                     self.chat.set_disconnected()
-                    break
-
-        sys.exit()
+                    sys.exit()
 
     def _connect(self, ip, port, password) -> None:
         print(f"connecting to: {ip}:{port}")
@@ -135,7 +129,6 @@ class Connection:
         enc = self.encrypt_data(text, mode)
         message = {"type": "text", "data": enc, "mode": mode}
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            print((self.IP, self.port))
             sock.connect((self.IP, self.port))
             sock.sendall(pickle.dumps(message))
         message["data"] = text
@@ -182,7 +175,6 @@ class Connection:
 
         os.remove(path_to_encrypted_file)
         self.in_progress = False
-
 
     def receive_file(self, conn, message) -> None:
         if not os.path.exists(DOWNLOAD_FOLDER):

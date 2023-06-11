@@ -131,7 +131,7 @@ class Encryption:
                     cip = cipher.decrypt(chunk)
                     outfile.write(cip)
 
-                outfile.truncate(original_size)
+                outfile.truncate(size)
 
         end_timer = timer()
         print("Decrypting file time is", end_timer - start_timer)

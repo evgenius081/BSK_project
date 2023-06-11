@@ -44,6 +44,7 @@ class Chat:
         self.file_attached = False
         self.send_button = None
         self.text = None
+        self.disconnected = False
 
     def file_sent(self) -> None:
         self.file_attached = False
@@ -69,19 +70,21 @@ class Chat:
             self.file_attached = True
 
     def set_disconnected(self):
-        disconnected_message = Frame(self.message_frame, bg=Colors.MAIN_BG.value, width=850)
-        self.messages.append(disconnected_message)
-        disconnected_message.grid(row=self.messages.index(disconnected_message), column=0, columnspan=2)
+        if not self.disconnected:
+            disconnected_message = Frame(self.message_frame, bg=Colors.MAIN_BG.value, width=850)
+            self.messages.append(disconnected_message)
+            disconnected_message.grid(row=self.messages.index(disconnected_message), column=0, columnspan=2)
 
-        disconnected_frame = Frame(disconnected_message, bg=Colors.MESSAGE_BG.value, width=850, height=2)
-        disconnected_frame.grid(row=0, column=0)
+            disconnected_frame = Frame(disconnected_message, bg=Colors.MESSAGE_BG.value, width=850, height=2)
+            disconnected_frame.grid(row=0, column=0)
 
-        disconnected_label = Label(disconnected_message, bg=Colors.MAIN_BG.value, foreground=Colors.MESSAGE_BG.value,
-                                   font=("Verdana", "12"),
-                                   text=f"{self.connection.IP}:{self.connection.port} disconnected", justify=CENTER)
-        disconnected_label.grid(row=0, column=0)
-        self.send_button.config(state=DISABLED)
-        self.text.unbind("<Return>")
+            disconnected_label = Label(disconnected_message, bg=Colors.MAIN_BG.value, foreground=Colors.MESSAGE_BG.value,
+                                       font=("Verdana", "12"),
+                                       text=f"{self.connection.IP}:{self.connection.port} disconnected", justify=CENTER)
+            disconnected_label.grid(row=0, column=0)
+            self.send_button.config(state=DISABLED)
+            self.text.unbind("<Return>")
+            self.disconnected = True
 
     def send_message(self, txt) -> None:
         message_txt = txt.get('1.0', END).strip()
